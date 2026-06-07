@@ -1,4 +1,4 @@
-package service;
+package rest;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -23,7 +23,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                     .build();
         }
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(Map.of("error", "Error interno del servidor"))
+                .entity(Map.of("error", "Error interno del servidor veriricar logs"))
                 .build();
     }
 }
