@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("io.quarkus") version "3.35.2"
+    id("io.freefair.lombok") version "9.2.0"
 
 }
 
@@ -31,6 +32,8 @@ dependencies {
     implementation("io.quarkus:quarkus-hibernate-validator:3.36.0")
     implementation("io.quarkus:quarkus-smallrye-openapi:3.36.0")
     implementation("io.quarkus:quarkus-jdbc-postgresql:3.36.0")
+    implementation("io.quarkus:quarkus-elytron-security-common")
+
 }
 
 tasks.test {
