@@ -1,57 +1,53 @@
 package entity;
-
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
+import org.locationtech.jts.geom.LineString;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "entregas")
-public class Entrega extends PanacheEntityBase {
+@Table(name = "rutas")
+public class Ruta extends PanacheEntityBase {
+
     @Id
     @GeneratedValue
     @Column(columnDefinition = "uuid", updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pedido_id", nullable = false)
-    private Pedido pedido;
-
     @Column(name = "repartidor_id", nullable = false)
     private UUID repartidorId;
 
-    @Column(name = "foto_url", length = 500)
-    private String fotoUrl;
-
-    @Column
-    private String mensaje;
-
-    @Column(name = "metodo_pago", length = 50)
-    private String metodoPago;
-
-    @Column
-    private String observaciones;
+    @Column(name = "fecha", nullable = false)
+    private LocalDate fecha;
 
     @Column(nullable = false, length = 20)
-    private String estado = "COMPLETA";
+    private String estado = "ACTIVA";
 
-    @Column(name = "timestamp_entrega", nullable = false)
-    private OffsetDateTime timestampEntrega;
+    @Column(name = "trayectoria", columnDefinition = "geometry(LineString,4326)")
+    private LineString trayectoria;
 
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
     @PrePersist
     public void prePersist() {
         createdAt = OffsetDateTime.now();
-        if (timestampEntrega == null) {
-            timestampEntrega = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+        if (fecha == null) {
+            fecha = LocalDate.now();
         }
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
 }

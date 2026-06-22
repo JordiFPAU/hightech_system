@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "detalle_pedido")
 public class DetallePedido extends PanacheEntityBase {
     @Id
     @GeneratedValue
