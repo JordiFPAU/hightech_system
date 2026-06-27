@@ -3,6 +3,7 @@ import dto.CrearUsuarioDTO;
 import dto.LoginDTO;
 import dto.TokenDTO;
 import dto.UsuarioDTO;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -21,17 +22,20 @@ public class UsuarioRest {
     UsuarioService usuarioService;
 
     @GET
+    @RolesAllowed({"ADMIN","GERENTE"})
     public List<UsuarioDTO> listarTodos() {
         return usuarioService.listarTodos();
     }
 
     @GET
     @Path("/{id}")
+    @RolesAllowed({"ADMIN","GERENTE"})
     public Response buscarPorId(@PathParam("id") UUID id) {
         return Response.ok(usuarioService.buscarPorId(id)).build();
     }
 
     @POST
+    @RolesAllowed({"ADMIN"})
     public Response crear(@Valid CrearUsuarioDTO dto) {
         UsuarioDTO creado = usuarioService.crear(dto);
         return Response.status(Response.Status.CREATED).entity(creado).build();

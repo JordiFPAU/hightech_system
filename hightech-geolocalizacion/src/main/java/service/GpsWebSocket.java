@@ -6,7 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
-import jakarta.ws.rs.PathParam;
+import jakarta.websocket.server.PathParam;
 
 import java.util.Map;
 import java.util.UUID;
@@ -65,11 +65,7 @@ public class GpsWebSocket {
                     "longitud", coordenada.getLongitud(),
                     "timestamp", coordenada.getTimestamp().toString()
             ));
-
-            // Enviar confirmación al repartidor
             session.getAsyncRemote().sendText(respuesta);
-
-            // Broadcast a sesión de monitoreo si existe
             Session adminSession = sesiones.get("admin-monitor");
             if (adminSession != null && adminSession.isOpen()) {
                 adminSession.getAsyncRemote().sendText(respuesta);

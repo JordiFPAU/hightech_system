@@ -2,6 +2,8 @@ package rest;
 
 import dto.CrearEntregaDTO;
 import dto.EntregaDTO;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -15,11 +17,13 @@ import java.util.UUID;
 @Path("/entregas")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Authenticated
 public class EntregaRest {
     @Inject
     EntregaService entregaService;
 
     @POST
+    @RolesAllowed({"ADMIN", "REPARTIDOR"})
     public Response crear(@Valid CrearEntregaDTO dto) {
         EntregaDTO creada = entregaService.crear(dto);
         return Response.status(Response.Status.CREATED).entity(creada).build();
@@ -27,12 +31,14 @@ public class EntregaRest {
 
     @GET
     @Path("/pedido/{pedidoId}")
+    @RolesAllowed({"ADMIN", "GERENTE", "REPARTIDOR"})
     public Response buscarPorPedido(@PathParam("pedidoId") UUID pedidoId) {
         return Response.ok(entregaService.buscarPorPedido(pedidoId)).build();
     }
 
     @GET
     @Path("/repartidor/{repartidorId}")
+    @RolesAllowed({"ADMIN", "GERENTE", "REPARTIDOR"})
     public List<EntregaDTO> listarPorRepartidor(@PathParam("repartidorId") UUID repartidorId) {
         return entregaService.listarPorRepartidor(repartidorId);
     }
