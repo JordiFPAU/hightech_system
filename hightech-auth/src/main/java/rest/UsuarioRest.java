@@ -3,6 +3,8 @@ import dto.CrearUsuarioDTO;
 import dto.LoginDTO;
 import dto.TokenDTO;
 import dto.UsuarioDTO;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -42,6 +44,7 @@ public class UsuarioRest {
     }
 
     @POST
+    @PermitAll
     @Path("/login")
     public Response login(@Valid LoginDTO dto) {
         TokenDTO token = usuarioService.login(dto);

@@ -34,6 +34,7 @@ dependencies {
     implementation("io.quarkus:quarkus-jdbc-postgresql:3.36.0")
     implementation("io.quarkus:quarkus-elytron-security-common")
 
+
 }
 
 tasks.test {
