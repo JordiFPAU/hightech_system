@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import mapper.StockMovimientoMapper;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import repository.ProductoRepository;
 import repository.StockMovimientoRepository;
 
@@ -28,38 +29,42 @@ public class StockService {
     @Inject
     StockMovimientoMapper stockMovimientoMapper;
 
+    @Inject
+    JsonWebToken jwt;
+
     @Transactional
     public StockMovimientoDTO ajustarStock(AjustarStockDTO dto) {
-        var producto = productoRepository.findByIdOptional(dto.productoId)
+        var producto = productoRepository.findByIdOptional(dto.getProductoId())
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
-        if (!dto.tipo.equals("ENTRADA") && !dto.tipo.equals("SALIDA")) {
+        if (!dto.getTipo().equals("ENTRADA") && !dto.getTipo().equals("SALIDA")) {
             throw new BadRequestException("El tipo debe ser ENTRADA o SALIDA");
         }
 
-        int stockAnterior = producto.stockActual;
+        int stockAnterior = producto.getStockActual();
         int stockNuevo;
 
-        if (dto.tipo.equals("ENTRADA")) {
-            stockNuevo = stockAnterior + dto.cantidad;
+        if (dto.getTipo().equals("ENTRADA")) {
+            stockNuevo = stockAnterior + dto.getCantidad();
         } else {
-            if (stockAnterior < dto.cantidad) {
-                throw new BadRequestException("Stock insuficiente — disponible: " + stockAnterior);
+            if (stockAnterior < dto.getCantidad()) {
+                throw new BadRequestException(
+                        "Stock insuficiente — disponible: " + stockAnterior);
             }
-            stockNuevo = stockAnterior - dto.cantidad;
+            stockNuevo = stockAnterior - dto.getCantidad();
         }
 
-        producto.stockActual = stockNuevo;
+        producto.setStockActual(stockNuevo);
         productoRepository.persist(producto);
 
         var movimiento = new StockMovimiento();
-        movimiento.producto = producto;
-        movimiento.usuarioId = dto.usuarioId;
-        movimiento.tipo = dto.tipo;
-        movimiento.cantidad = dto.cantidad;
-        movimiento.stockAnterior = stockAnterior;
-        movimiento.stockNuevo = stockNuevo;
-        movimiento.observacion = dto.observacion;
+        movimiento.setProducto(producto);
+        movimiento.setUsuarioId(UUID.fromString(jwt.getSubject())); // ← del token
+        movimiento.setTipo(dto.getTipo());
+        movimiento.setCantidad(dto.getCantidad());
+        movimiento.setStockAnterior(stockAnterior);
+        movimiento.setStockNuevo(stockNuevo);
+        movimiento.setObservacion(dto.getObservacion());
 
         stockMovimientoRepository.persist(movimiento);
         return stockMovimientoMapper.toDTO(movimiento);

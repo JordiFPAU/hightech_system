@@ -21,5 +21,5 @@ public class AjustarStockDTO {
     public Integer cantidad;
 
     public String observacion;
-    public UUID usuarioId;
+
 }
