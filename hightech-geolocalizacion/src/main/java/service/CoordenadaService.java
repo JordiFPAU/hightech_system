@@ -3,6 +3,7 @@ package service;
 import dto.CoordenadaDTO;
 import dto.EnviarCoordenadaDTO;
 import dto.UbicacionActualDTO;
+import io.smallrye.common.annotation.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;

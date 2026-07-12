@@ -24,4 +24,5 @@ public class CrearUsuarioDTO {
 
     @NotNull(message = "El rol es obligatorio")
     public UUID rolId;
+
 }

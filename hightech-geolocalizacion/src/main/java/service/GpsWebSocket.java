@@ -1,12 +1,15 @@
 package service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dto.EnviarCoordenadaDTO;
+import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
-import jakarta.websocket.server.ServerEndpoint;
 import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
+import service.CoordenadaService;
 
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +27,9 @@ public class GpsWebSocket {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    Vertx vertx;
+
     @OnOpen
     public void onOpen(Session session, @PathParam("repartidorId") String repartidorId) {
         sesiones.put(repartidorId, session);
@@ -37,51 +43,42 @@ public class GpsWebSocket {
     }
 
     @OnError
-    public void onError(Session session, @PathParam("repartidorId") String repartidorId,
-                        Throwable error) {
+    public void onError(Session session, @PathParam("repartidorId") String repartidorId, Throwable error) {
         sesiones.remove(repartidorId);
-        System.err.println("Error WebSocket repartidor " + repartidorId + ": " + error.getMessage());
+        System.err.println("Error WebSocket: " + error.getMessage());
     }
 
     @OnMessage
     public void onMessage(String mensaje, @PathParam("repartidorId") String repartidorId, Session session) {
-        try {
-            var payload = objectMapper.readTree(mensaje);
+        // Ejecutar operación de BD en hilo bloqueante separado
+        vertx.executeBlocking(() -> {
+            try {
+                var payload = objectMapper.readTree(mensaje);
 
-            EnviarCoordenadaDTO dto = new EnviarCoordenadaDTO();
-            dto.setRepartidorId(UUID.fromString(repartidorId));
-            dto.setLatitud(payload.get("latitud").asDouble());
-            dto.setLongitud(payload.get("longitud").asDouble());
+                EnviarCoordenadaDTO dto = new EnviarCoordenadaDTO();
+                dto.setRepartidorId(UUID.fromString(repartidorId));
+                dto.setLatitud(payload.get("latitud").asDouble());
+                dto.setLongitud(payload.get("longitud").asDouble());
 
-            if (payload.has("pedidoId") && !payload.get("pedidoId").isNull()) {
-                dto.setPedidoId(UUID.fromString(payload.get("pedidoId").asText()));
+                if (payload.has("pedidoId") && !payload.get("pedidoId").isNull()) {
+                    dto.setPedidoId(UUID.fromString(payload.get("pedidoId").asText()));
+                }
+
+                var coordenada = coordenadaService.registrar(dto);
+
+                String respuesta = objectMapper.writeValueAsString(Map.of(
+                        "repartidorId", repartidorId,
+                        "latitud", coordenada.getLatitud(),
+                        "longitud", coordenada.getLongitud(),
+                        "timestamp", coordenada.getTimestamp().toString()
+                ));
+
+                session.getAsyncRemote().sendText(respuesta);
+
+            } catch (Exception e) {
+                System.err.println("Error procesando GPS: " + e.getMessage());
             }
-
-            var coordenada = coordenadaService.registrar(dto);
-
-            String respuesta = objectMapper.writeValueAsString(Map.of(
-                    "repartidorId", repartidorId,
-                    "latitud", coordenada.getLatitud(),
-                    "longitud", coordenada.getLongitud(),
-                    "timestamp", coordenada.getTimestamp().toString()
-            ));
-            session.getAsyncRemote().sendText(respuesta);
-            Session adminSession = sesiones.get("admin-monitor");
-            if (adminSession != null && adminSession.isOpen()) {
-                adminSession.getAsyncRemote().sendText(respuesta);
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error procesando mensaje GPS: " + e.getMessage());
-        }
-    }
-
-    // Método para enviar ubicación a una sesión específica desde fuera del WebSocket
-    public static void broadcastUbicacion(String mensaje) {
-        sesiones.values().forEach(session -> {
-            if (session.isOpen()) {
-                session.getAsyncRemote().sendText(mensaje);
-            }
-        });
+            return null;
+        }, false);
     }
 }
